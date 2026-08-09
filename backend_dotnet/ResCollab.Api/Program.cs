@@ -54,4 +54,5 @@ app.UseCors("AllowReactApp");
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run("http://127.0.0.1:8000");
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8000";
+app.Run($"http://0.0.0.0:{port}");
