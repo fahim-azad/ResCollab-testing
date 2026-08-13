@@ -32,6 +32,7 @@ export default function SearchDashboard() {
     const [selectedSource, setSelectedSource] = useState('All');
     const [selectedYear, setSelectedYear] = useState('All');
     const [selectedLanguage, setSelectedLanguage] = useState('All');
+    const [sortBy, setSortBy] = useState('Most Relevant');
 
     useEffect(() => {
         setSelectedSource('All');
@@ -75,7 +76,11 @@ export default function SearchDashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                     <ArrowUpDown className="w-4 h-4 text-gray-400" />
-                    <select className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer hover:text-primary transition-colors">
+                    <select 
+                        className="bg-transparent text-sm font-medium text-gray-700 outline-none cursor-pointer hover:text-primary transition-colors"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                    >
                         <option>Most Relevant</option>
                         <option>Newest</option>
                         <option>Most Cited</option>
@@ -159,7 +164,7 @@ export default function SearchDashboard() {
             );
         }
 
-        let currentResults = results[activeTab] || [];
+        let currentResults = [...(results[activeTab] || [])];
         const uniqueSources = ['All', ...new Set(currentResults.map(item => item.source).filter(Boolean))].sort();
         const uniqueYears = ['All', ...new Set(currentResults.map(item => item.year).filter(Boolean))].sort().reverse();
         const uniqueLanguages = ['All', ...new Set(currentResults.map(item => item.language).filter(Boolean))].sort();
@@ -167,6 +172,21 @@ export default function SearchDashboard() {
         if (selectedSource !== 'All') currentResults = currentResults.filter(item => item.source === selectedSource);
         if (selectedYear !== 'All') currentResults = currentResults.filter(item => item.year === selectedYear);
         if (selectedLanguage !== 'All' && activeTab === 'source_code') currentResults = currentResults.filter(item => item.language === selectedLanguage);
+        
+        // Sorting logic
+        if (sortBy === 'Newest') {
+            currentResults.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                return yearB - yearA;
+            });
+        } else if (sortBy === 'Most Cited') {
+            currentResults.sort((a, b) => {
+                const citeA = a.citationCount || 0;
+                const citeB = b.citationCount || 0;
+                return citeB - citeA;
+            });
+        }
         
         if (currentResults.length === 0 && (selectedSource !== 'All' || selectedYear !== 'All' || selectedLanguage !== 'All')) {
             return (
