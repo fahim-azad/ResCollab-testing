@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, BookOpen, Database, Code, Users, Briefcase, Filter, ExternalLink, Bookmark, Activity, ArrowUpDown, FlaskConical } from 'lucide-react';
+import { Search, BookOpen, Database, Code, Users, Briefcase, Filter, ExternalLink, Bookmark, Activity, ArrowUpDown, FlaskConical, TrendingUp } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent } from '../../components/ui/Card';
 
@@ -50,7 +50,7 @@ export default function SearchDashboard() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://127.0.0.1:8000/api/search/?q=${encodeURIComponent(searchQuery)}`);
+            const response = await axios.get(`https://rescollab-testing.onrender.com/api/search/?q=${encodeURIComponent(searchQuery)}`);
             setResults(response.data.results);
             setMetadata(response.data.metadata);
         } catch (error) {
@@ -154,7 +154,7 @@ export default function SearchDashboard() {
             return (
                 <div className="flex flex-col items-center justify-center py-32 bg-red-50 rounded-3xl border border-red-100">
                     <div className="text-red-500 text-xl font-medium mb-2">⚠️ {error}</div>
-                    <p className="text-red-400">Please make sure the backend server is running on port 8000.</p>
+                    <p className="text-red-400">Please make sure the backend server is running and accessible.</p>
                 </div>
             );
         }
@@ -227,10 +227,57 @@ export default function SearchDashboard() {
                                     {item.university && <p className="text-sm text-gray-600 mb-2">🎓 {item.university}</p>}
                                     {item.language && <p className="text-sm text-gray-600 mb-2">Code: <span className="font-semibold">{item.language}</span></p>}
                                     
-                                    {/* Mock Abstract */}
-                                    <p className="text-sm text-gray-500 mb-4 line-clamp-2">
-                                        This is a placeholder abstract. {item.title || item.name} explores significant findings in the field, presenting novel methodologies and demonstrating state-of-the-art results across several standard benchmarks.
-                                    </p>
+                                    {/* Abstract */}
+                                    {item.abstract ? (
+                                        <p className="text-sm text-gray-500 mb-4 line-clamp-2">
+                                            {item.abstract}
+                                        </p>
+                                    ) : activeTab === 'papers' ? (
+                                        <p className="text-sm text-gray-400 mb-4 italic">No abstract available.</p>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 mb-4 line-clamp-2">
+                                            This is a placeholder description. {item.title || item.name} explores significant findings in the field, presenting novel methodologies and demonstrating state-of-the-art results across several standard benchmarks.
+                                        </p>
+                                    )}
+
+                                    {/* Journal & ExCITATION metrics */}
+                                    {(item.journalName || item.citationCount != null || item.sjr || item.abs || item.abdc) && (
+                                        <div className="flex flex-wrap items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl border border-border-main">
+                                            {item.journalName && (
+                                                <div className="text-sm font-medium text-gray-700 flex items-center">
+                                                    <BookOpen className="w-4 h-4 mr-1.5 text-gray-400" />
+                                                    {item.journalName}
+                                                </div>
+                                            )}
+                                            
+                                            {item.journalName && (item.sjr || item.abs || item.abdc || item.citationCount != null) && (
+                                                <div className="w-px h-4 bg-gray-300"></div>
+                                            )}
+                                            
+                                            {item.citationCount != null && (
+                                                <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                                                    <TrendingUp className="w-3.5 h-3.5" />
+                                                    {item.citationCount} Citations
+                                                </div>
+                                            )}
+                                            
+                                            {item.sjr && (
+                                                <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 shadow-sm hover:scale-105 transition-transform cursor-default">
+                                                    SJR {item.sjr}
+                                                </div>
+                                            )}
+                                            {item.abs && (
+                                                <div className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 shadow-sm hover:scale-105 transition-transform cursor-default">
+                                                    ABS {item.abs}
+                                                </div>
+                                            )}
+                                            {item.abdc && (
+                                                <div className="flex items-center gap-1 text-xs font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded-md border border-purple-200 shadow-sm hover:scale-105 transition-transform cursor-default">
+                                                    ABDC {item.abdc}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                     
                                     <div className="flex flex-wrap gap-2 mt-auto">
                                         {item.research_interests && item.research_interests.map(i => (

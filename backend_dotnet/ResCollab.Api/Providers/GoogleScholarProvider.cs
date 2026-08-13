@@ -51,6 +51,7 @@ namespace ResCollab.Api.Providers
                     var metaMatch = Regex.Match(itemHtml, @"<div class=""gs_a"">(.*?)</div>");
                     var authors = new List<string>();
                     string year = "";
+                    string journalName = "Unknown Journal";
                     
                     if (metaMatch.Success)
                     {
@@ -65,20 +66,51 @@ namespace ResCollab.Api.Providers
                         }
                         if (parts.Length >= 2)
                         {
-                            var yearMatch = Regex.Match(parts[1], @"(19|20)\d{2}");
-                            if (yearMatch.Success) year = yearMatch.Value;
+                            var journalPart = parts[1];
+                            var yearMatch = Regex.Match(journalPart, @"\b(19|20)\d{2}\b");
+                            if (yearMatch.Success) 
+                            {
+                                year = yearMatch.Value;
+                                journalName = journalPart.Replace(year, "").Replace(",", "").Trim();
+                            }
+                            else
+                            {
+                                journalName = journalPart.Trim();
+                            }
                         }
                     }
+
+                    // Extract Abstract
+                    string abstractText = null;
+                    var abstractMatch = Regex.Match(itemHtml, @"<div class=""gs_rs"">(.*?)</div>", RegexOptions.Singleline);
+                    if (abstractMatch.Success)
+                    {
+                        abstractText = Regex.Replace(abstractMatch.Groups[1].Value, "<.*?>", "").Trim();
+                    }
+
+                    // Extract Citation Count
+                    int? citationCount = null;
+                    var citeMatch = Regex.Match(itemHtml, @"Cited by (\d+)");
+                    if (citeMatch.Success && int.TryParse(citeMatch.Groups[1].Value, out int cites))
+                    {
+                        citationCount = cites;
+                    }
                     
-                    results.Add(new SearchResultItem
+                    var resultItem = new SearchResultItem
                     {
                         Id = link,
                         Title = title,
                         Source = ProviderName,
                         Year = year,
                         Link = link,
-                        Authors = authors
-                    });
+                        Authors = authors,
+                        Abstract = abstractText,
+                        CitationCount = citationCount,
+                        JournalName = string.IsNullOrEmpty(journalName) ? "Unknown Venue" : journalName
+                    };
+
+                    MockRankings(resultItem);
+                    results.Add(resultItem);
                 }
                 return results;
             }
@@ -86,6 +118,38 @@ namespace ResCollab.Api.Providers
             {
                 Console.WriteLine($"Google Scholar Provider Error: {ex.Message}");
                 return new List<SearchResultItem>();
+            }
+        }
+
+        private void MockRankings(SearchResultItem item)
+        {
+            // Only assign rankings to some items to show UI variation
+            var rand = new Random(item.Title.GetHashCode());
+            
+            // 70% chance to have rankings
+            if (rand.Next(10) > 2)
+            {
+                var j = item.JournalName?.ToLower() ?? "";
+                if (j.Contains("nature") || j.Contains("science") || j.Contains("machine learning"))
+                {
+                    item.SJR = "Q1";
+                    item.ABS = "4*";
+                    item.ABDC = "A*";
+                }
+                else if (j.Contains("ieee") || j.Contains("acm"))
+                {
+                    item.SJR = "Q1";
+                    item.ABS = "3";
+                    item.ABDC = "A";
+                }
+                else
+                {
+                    item.SJR = "Q" + rand.Next(1, 5);
+                    var absRatings = new[] { "4", "3", "2", "1" };
+                    item.ABS = absRatings[rand.Next(absRatings.Length)];
+                    var abdcRatings = new[] { "A", "B", "C" };
+                    item.ABDC = abdcRatings[rand.Next(abdcRatings.Length)];
+                }
             }
         }
     }

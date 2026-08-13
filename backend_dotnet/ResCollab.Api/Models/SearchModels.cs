@@ -16,6 +16,14 @@ namespace ResCollab.Api.Models
         public string University { get; set; }
         public List<string> ResearchInterests { get; set; } = new();
         public List<string> OpenRoles { get; set; } = new();
+        
+        // ExCITATION-like properties
+        public string Abstract { get; set; }
+        public int? CitationCount { get; set; }
+        public string JournalName { get; set; }
+        public string SJR { get; set; }
+        public string ABS { get; set; }
+        public string ABDC { get; set; }
     }
 
     public class SearchResponse
